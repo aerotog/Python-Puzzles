@@ -23,8 +23,8 @@ def find_max_sum(tri_list):
 	return tri_list[0][0]
 
 
-#data = file_to_list("tritest.txt")
-data = file_to_list("triangle.txt")
+#data = file_to_list("TRITEST.txt")
+data = file_to_list("TRIANGLE.txt")
 
 ans = find_max_sum(data)
 print(ans)
