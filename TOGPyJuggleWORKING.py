@@ -25,7 +25,7 @@ class Juggler():
 		self.stats_list = data[1:4]
 		self.circuits_wanted = data[4].split(",")
 		self.perf_stats = {}
-		self.assignment = "unassigned"
+		self.assignment = -1
 		
 		# Convert stats raw list to dictionary
 		self.stats_dict = {}		
@@ -70,16 +70,25 @@ def file_to_list(file_name):
 
 def print_schedule():
 	file_out = open("output.txt", "w")
-	print("CORRECT")
-	print("C2: J6, J3, J10, J0")
-	print("C1: J9, J8, J7, J1")
-	print("C0: J5, J11, J2, J4")
-	print("MINE")
-	for circ_key in Circuits:
+	if len(Circuits) < 5:		
+		print("CORRECT")
+		print("C2: J6, J3, J10, J0")
+		print("C1: J9, J8, J7, J1")
+		print("C0: J5, J11, J2, J4")
+		print("MINE")
+		for circ_key in Circuits:
+			output = []		
+			for key in Circuits[circ_key].performances:
+				output.append(key)
+			to_write = circ_key,output
+			print(to_write)
+			file_out.write(str(to_write))
+			file_out.write("\n")
+	else:
 		output = []		
-		for key in Circuits[circ_key].performances:
+		for key in Circuits["C1970"].performances:
 			output.append(key)
-		to_write = circ_key,output
+		to_write = ("C1970",output)
 		print(to_write)
 		file_out.write(str(to_write))
 		file_out.write("\n")
@@ -87,7 +96,7 @@ def print_schedule():
 
 def build_schedule(juggler, circuit, choice):
 
-	if juggler.assignment == "unassigned":
+	if juggler.assignment < 0:
 		if len(circuit.performances) < jugg_per_circ:
 			# print("Filling ", circuit.name, " with ",juggler.name)
 			circuit.performances[juggler.name] = juggler.perf_stats[circuit.name]
@@ -100,16 +109,20 @@ def build_schedule(juggler, circuit, choice):
 			circuit.performances[juggler.name] = juggler.perf_stats[circuit.name]
 			juggler.assignment = choice
 
-			smaller_keys = []
-			for key in circuit.performances:
-				if circuit.performances[key] < circuit.performances[juggler.name]:
-					smaller_keys.append(key)
+			# # smaller_keys = []
+			# for key in circuit.performances:
+			# 	if circuit.performances[key] < circuit.performances[juggler.name]:
+			# 		smaller_keys.append(key)
 
-			# print(juggler.name," is better at ", circuit.name, " than ", smaller_keys)
+			# # print(juggler.name," is better at ", circuit.name, " than ", smaller_keys)
 
-			for key in smaller_keys:
-				circuit.performances.pop(key)
-				Jugglers[key].assignment = "unassigned"
+			# for key in smaller_keys:
+			# 	circuit.performances.pop(key)
+			# 	Jugglers[key].assignment = "unassigned"
+
+			min_key = min(circuit.performances, key=circuit.performances.get)
+			circuit.performances.pop(min_key)
+			Jugglers[min_key].assignment = -1
 
 			return True
 	
@@ -134,78 +147,59 @@ def build_schedule(juggler, circuit, choice):
 
 			for key in smaller_keys:
 				circuit.performances.pop(key)
-				Jugglers[key].assignment = "unassigned"
+				Jugglers[key].assignment = -1
 
 			return True
 	else:
 		return False
 
-def process(choice):
-	return choice * 2
-
-	# global change_count
-
-	# for key in Jugglers:
-	# 		juggler = Jugglers[key]
-	# 		circuit = Circuits[Jugglers[key].circuits_wanted[choice]]
-	# 		if build_schedule(juggler, circuit, choice):
-	# 			#changed_schedule = True
-	# 			change_count += 1
-
-
-Circuits = {}
-Jugglers = {}
-choice_prefs = 0
-
-file_to_list("JUGGLE_TEST.txt")
-# file_to_list("JUGGLE_FEST.txt")
-
-# Set number of picks each juggler makes and number of jugglers per circuit
-choice_prefs = len(list(Jugglers.values())[0].circuits_wanted)
-jugg_per_circ = len(Jugglers) / len(Circuits)
-
-i = 0
-change_count = 1
-
-# Runs schedule builder until schedule is finished
-while change_count != 0:
-	change_count = 0
-
-	i += 1
-	print("Run",i, end=": ")
-
-	# Break loop if stuck
-	if i > 100:
-		print("INF LOOP?")
-		break
-
-	# Try to build a working schedule
-	for choice in (range(choice_prefs)):
-		# print("Choice: ",choice + 1)
-		for key in Jugglers:
-			juggler = Jugglers[key]
-			circuit = Circuits[Jugglers[key].circuits_wanted[choice]]
-			if build_schedule(juggler, circuit, choice):
-				#changed_schedule = True
-				change_count += 1
-
+if __name__ == '__main__':
 	
-	# choice_list = list(range(0,choice_prefs))
-	# print("Number is ", choice_prefs)
-	# print(choice_list)
+	Circuits = {}
+	Jugglers = {}
+	choice_prefs = 0
 
-	# procs = Pool(5)
-	# procs.map(process, choice_list)
+	file_to_list("JUGGLE_TEST.txt")
+	# file_to_list("JUGGLE_FEST.txt")
 
-	if change_count == 0:
-		print("Schedule is finished")
-	else:
-		print(change_count," changes made")
+	# Set number of picks each juggler makes and number of jugglers per circuit
+	choice_prefs = len(list(Jugglers.values())[0].circuits_wanted)
+	jugg_per_circ = len(Jugglers) / len(Circuits)
 
-	# print(Circuits["C0"].performances)
+	i = 0
+	change_count = 1
 
-print()
-print_schedule()
+	# Runs schedule builder until schedule is finished
+	while change_count != 0:
+		change_count = 0
+
+		i += 1
+		print("Run",i, end=": ")
+
+		# Break loop if stuck
+		if i > 10:
+			print("INF LOOP?")
+			break
+
+		# Try to build a working schedule
+		for choice in (range(choice_prefs)):
+			# print("Choice: ",choice + 1)
+			for key in Jugglers:
+				juggler = Jugglers[key]
+				circuit = Circuits[Jugglers[key].circuits_wanted[choice]]
+				if build_schedule(juggler, circuit, choice):
+					#changed_schedule = True
+					change_count += 1
+		
+		if change_count == 0:
+			print("Schedule is finished")
+		else:
+			print(change_count," changes made")
+
+	print()
+	print_schedule()
+
+
 
 
 
